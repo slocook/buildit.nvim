@@ -76,15 +76,16 @@ local function project_root()
     return vim.fs.dirname(results[5] or results[4] or results[3] or results[2] or results[1])
 end
 
-function M.run_cmd(cmd)
+function M.run_cmd(cmd, subdir)
     buf = nil
     M.close()
 
     buf, win = M.open(cmd)
     local root = project_root() or vim.fn.getcwd()
+    local dir = root .. '/' .. subdir
 
     vim.fn.termopen(cmd, {
-        cwd = root,
+        cwd = dir,
         on_exit = function()
             vim.api.nvim_set_current_win(win)
             vim.api.nvim_feedkeys(
