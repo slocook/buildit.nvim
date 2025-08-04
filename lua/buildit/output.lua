@@ -82,6 +82,7 @@ function M.run_cmd(cmd, subdir)
 
     buf, win = M.open(cmd)
     local root = project_root() or vim.fn.getcwd()
+    subdir = subdir or '.'
     local dir = root .. '/' .. subdir
 
     vim.fn.termopen(cmd, {
