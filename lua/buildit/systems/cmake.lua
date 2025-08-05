@@ -20,7 +20,8 @@ end
 
 local function build()
     local args = {
-        '--build ' .. build_dir()
+        '--build ' .. build_dir(),
+        '-j ' .. escape(config.threads)
     }
     return 'cmake ' .. table.concat(args, ' ')
 end

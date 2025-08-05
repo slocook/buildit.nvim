@@ -3,7 +3,8 @@ local M = {}
 M.options = {
     cmake = {
         build_dir = 'build',
-        build_type = 'Debug'
+        build_type = 'Debug',
+        threads = 4
     }
 }
 
