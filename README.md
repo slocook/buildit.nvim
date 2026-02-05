@@ -39,6 +39,26 @@ The following commands are provided:
 | `:BuilditTest` | Runs tests |
 | `:BuilditToggleOutput` | Show/hide the output window |
 
+## Configuration
+
+Pass options to `setup()` to customize build system settings:
+
+```lua
+require('buildit').setup({
+    cmake = {
+        build_dir = 'build',    -- Build directory (default: 'build')
+        build_type = 'Debug',   -- Build type (default: 'Debug')
+        threads = 4             -- Parallel jobs (default: 4)
+    },
+    ninja = {
+        build_dir = 'build',    -- Build directory (default: 'build')
+        threads = 4             -- Parallel jobs (default: 4)
+    },
+    autotools = {
+        threads = 4             -- Parallel jobs for make (default: 4)
+    }
+})
+```
+
 ## TODO
   - [ ] Improve automatic build system and project root detection
-  - [ ] Add configurability for build settings
