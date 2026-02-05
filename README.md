@@ -21,7 +21,8 @@ use {
         vim.keymap.set('n', '<leader>bg', ':BuilditConfigure<CR>')
         vim.keymap.set('n', '<leader>bb', ':BuilditBuild<CR>')
         vim.keymap.set('n', '<leader>bc', ':BuilditClean<CR>')
-        vim.keymap.set('n', '<leader>bt', ':BuilditToggleOutput<CR>')
+        vim.keymap.set('n', '<leader>bt', ':BuilditTest<CR>')
+        vim.keymap.set('n', '<leader>bf', ':BuilditToggleOutput<CR>')
     end
 }
 ```
@@ -35,9 +36,9 @@ The following commands are provided:
 | `:BuilditConfigure` | Configures the project for building |
 | `:BuilditBuild` | Builds the project |
 | `:BuilditClean` | Cleans the project build |
+| `:BuilditTest` | Runs tests |
 | `:BuilditToggleOutput` | Show/hide the output window |
 
 ## TODO
   - [ ] Improve automatic build system and project root detection
   - [ ] Add configurability for build settings
-  - [ ] Add testing support
