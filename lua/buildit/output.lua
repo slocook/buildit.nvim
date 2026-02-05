@@ -1,7 +1,42 @@
 local M = {}
 
+local notify = require('buildit.notify')
+
 local buf, win = nil, nil
 local last_title = nil
+local project_cwd = nil
+
+local function jump_to_error()
+    local line = vim.api.nvim_get_current_line()
+
+    local patterns = {
+        '([^%s:]+):(%d+):(%d+)',      -- file:line:col (gcc, clang, rust, go)
+        '([^%s:]+):(%d+)',             -- file:line
+        '([^%s%(]+)%((%d+),(%d+)%)',   -- file(line,col) (msvc)
+        '([^%s%(]+)%((%d+)%)',         -- file(line) (msvc)
+    }
+
+    for _, pattern in ipairs(patterns) do
+        local file, lnum, col = line:match(pattern)
+        if file and lnum then
+            lnum = tonumber(lnum)
+            col = tonumber(col) or 1
+
+            if project_cwd and not file:match('^/') then
+                file = project_cwd .. '/' .. file
+            end
+
+            if vim.fn.filereadable(file) == 1 then
+                M.close()
+                vim.cmd('edit ' .. vim.fn.fnameescape(file))
+                vim.api.nvim_win_set_cursor(0, { lnum, col - 1 })
+                return
+            end
+        end
+    end
+
+    M.close()
+end
 
 function M.is_open()
     return win and vim.api.nvim_win_is_valid(win)
@@ -49,15 +84,45 @@ function M.open(title)
         title = last_title
     })
 
-    local opts = { noremap = true, silent = true, nowait = true }
-    local close_cmd = ':close<CR>'
-
-    vim.api.nvim_buf_set_keymap(buf, 'n', '<CR>', close_cmd, opts)
-    vim.api.nvim_buf_set_keymap(buf, 'n', 'q', close_cmd, opts)
-    vim.api.nvim_buf_set_keymap(buf, 'n', '<Esc>', close_cmd, opts)
-    vim.api.nvim_buf_set_keymap(buf, 'n', '<C-c>', close_cmd, opts)
+    vim.keymap.set('n', '<CR>', jump_to_error, { buffer = buf, noremap = true, silent = true })
+    vim.keymap.set('n', 'q', M.close, { buffer = buf, noremap = true, silent = true })
+    vim.keymap.set('n', '<Esc>', M.close, { buffer = buf, noremap = true, silent = true })
+    vim.keymap.set('n', '<C-c>', M.close, { buffer = buf, noremap = true, silent = true })
 
     return buf, win
+end
+
+local function append_to_buffer(lines)
+    if not buf or not vim.api.nvim_buf_is_valid(buf) then
+        return
+    end
+
+    vim.schedule(function()
+        if not buf or not vim.api.nvim_buf_is_valid(buf) then
+            return
+        end
+
+        vim.api.nvim_buf_set_option(buf, 'modifiable', true)
+        local line_count = vim.api.nvim_buf_line_count(buf)
+
+        local filtered = {}
+        for _, line in ipairs(lines) do
+            if line ~= '' then
+                table.insert(filtered, line)
+            end
+        end
+
+        if #filtered > 0 then
+            vim.api.nvim_buf_set_lines(buf, line_count, line_count, false, filtered)
+
+            if M.is_open() then
+                local new_count = vim.api.nvim_buf_line_count(buf)
+                vim.api.nvim_win_set_cursor(win, { new_count, 0 })
+            end
+        end
+
+        vim.api.nvim_buf_set_option(buf, 'modifiable', false)
+    end)
 end
 
 function M.run_cmd(cmd, cwd)
@@ -66,22 +131,40 @@ function M.run_cmd(cmd, cwd)
 
     buf, win = M.open(cmd)
     cwd = cwd or vim.fn.getcwd()
+    project_cwd = cwd
 
-    vim.fn.termopen(cmd, {
+    vim.api.nvim_buf_set_option(buf, 'modifiable', true)
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, {})
+    vim.api.nvim_buf_set_option(buf, 'modifiable', false)
+
+    local function on_output(_, data, _)
+        if data then
+            append_to_buffer(data)
+        end
+    end
+
+    local job_id = vim.fn.jobstart(cmd, {
         cwd = cwd,
-        on_exit = function()
-            if M.is_open() then
-                vim.api.nvim_set_current_win(win)
-                vim.api.nvim_feedkeys(
-                    vim.api.nvim_replace_termcodes('<C-\\><C-n>', true, false, true),
-                    'n',
-                    false
-                )
-            end
+        stdout_buffered = false,
+        stderr_buffered = false,
+        on_stdout = on_output,
+        on_stderr = on_output,
+        on_exit = function(_, exit_code)
+            vim.schedule(function()
+                if exit_code == 0 then
+                    notify.info('Command completed successfully')
+                else
+                    notify.error('Command failed with exit code ' .. exit_code)
+                end
+            end)
         end
     })
 
-    vim.cmd('startinsert')
+    if job_id == 0 then
+        notify.error('Invalid arguments to jobstart')
+    elseif job_id == -1 then
+        notify.error('Command not executable: ' .. cmd)
+    end
 end
 
 return M
