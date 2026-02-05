@@ -1,21 +1,45 @@
 local M = {}
 
-local function detect_system()
-    if vim.fn.filereadable('CMakeLists.txt') == 1 then
-        return 'cmake'
-    elseif vim.fn.filereadable('configure.ac') == 1 then
-        return 'autotools'
-    elseif vim.fn.filereadable('build.ninja') == 1 then
-        return 'ninja'
+local notify = require('buildit.notify')
+local util = require('buildit.util')
+local detect = require('buildit.detect')
+
+local tools = {
+    cmake = 'cmake',
+    ninja = 'ninja',
+    autotools = 'make',
+}
+
+local function get_backend(system_name)
+    if system_name then
+        return require('buildit.systems.' .. system_name)
+    end
+    return nil
+end
+
+local function run_backend(method)
+    local system_name, root = detect.detect()
+
+    if not system_name then
+        notify.error('No build system detected')
+        return
+    end
+
+    local tool = tools[system_name]
+    if not util.executable(tool) then
+        notify.error(tool .. ' is not installed or not in PATH')
+        return
+    end
+
+    local backend = get_backend(system_name)
+    if backend and backend[method] then
+        backend[method](root)
     end
 end
 
-local system_name = detect_system()
-local backend = system_name and require('buildit.systems.' .. system_name)
-
-function M.configure() return backend and backend.configure() end
-function M.build() return backend and backend.build() end
-function M.clean() return backend and backend.clean() end
-function M.test() return backend and backend.test() end
+function M.configure() run_backend('configure') end
+function M.build() run_backend('build') end
+function M.clean() run_backend('clean') end
+function M.test() run_backend('test') end
 
 return M

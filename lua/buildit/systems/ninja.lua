@@ -7,16 +7,16 @@ function M.configure()
     -- no-op: ninja doesn't have a configure step
 end
 
-function M.build()
-    output.run_cmd('ninja -C ' .. config.build_dir .. ' -j ' .. config.threads)
+function M.build(root)
+    output.run_cmd('ninja -C ' .. config.build_dir .. ' -j ' .. config.threads, root)
 end
 
-function M.clean()
-    output.run_cmd('ninja -C ' .. config.build_dir .. ' clean')
+function M.clean(root)
+    output.run_cmd('ninja -C ' .. config.build_dir .. ' clean', root)
 end
 
-function M.test()
-    output.run_cmd('ninja -C ' .. config.build_dir .. ' test')
+function M.test(root)
+    output.run_cmd('ninja -C ' .. config.build_dir .. ' test', root)
 end
 
 return M

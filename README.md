@@ -4,7 +4,7 @@ A simple Neovim plugin written in Lua that provides a basic interface to build s
 build system automatically and exposes user commands to configure and build.
 
 ## 🚀 Features
-  - Auto-detects build system
+  - Auto-detects build system (searches parent directories)
   - Toggleable output window
   - Easily extensible
 
@@ -61,4 +61,4 @@ require('buildit').setup({
 ```
 
 ## TODO
-  - [ ] Improve automatic build system and project root detection
+  - [ ] Additional build systems / languages

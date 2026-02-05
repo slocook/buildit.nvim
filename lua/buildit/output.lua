@@ -60,41 +60,24 @@ function M.open(title)
     return buf, win
 end
 
-local function project_root()
-    -- TODO: needs to be improved
-    local results = vim.fs.find({ 'CMakeLists.txt' }, { 
-        upward = true, 
-        type = 'file',
-        limit = 5
-    })
-
-    if not results or #results == 0 then
-        return nil
-    end
-
-    -- Horrible hack
-    return vim.fs.dirname(results[5] or results[4] or results[3] or results[2] or results[1])
-end
-
-function M.run_cmd(cmd, subdir)
+function M.run_cmd(cmd, cwd)
     buf = nil
     M.close()
 
     buf, win = M.open(cmd)
-    local root = project_root() or vim.fn.getcwd()
-    subdir = subdir or '.'
-    local dir = root .. '/' .. subdir
+    cwd = cwd or vim.fn.getcwd()
 
     vim.fn.termopen(cmd, {
-        cwd = dir,
+        cwd = cwd,
         on_exit = function()
-            vim.api.nvim_set_current_win(win)
-            vim.api.nvim_feedkeys(
-                vim.api.nvim_replace_termcodes('<C-\\><C-n>', true, false, true),
-                'n',
-                false
-            )
-            -- vim.api.nvim_win_close(win, true)
+            if M.is_open() then
+                vim.api.nvim_set_current_win(win)
+                vim.api.nvim_feedkeys(
+                    vim.api.nvim_replace_termcodes('<C-\\><C-n>', true, false, true),
+                    'n',
+                    false
+                )
+            end
         end
     })
 

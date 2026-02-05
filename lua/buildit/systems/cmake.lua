@@ -9,7 +9,7 @@ local function build_dir()
     return escape(config.build_dir)
 end
 
-local function configure()
+local function configure_cmd()
     local args = {
         '-S .',
         '-B ' .. build_dir(),
@@ -18,25 +18,21 @@ local function configure()
     return 'cmake ' .. table.concat(args, ' ')
 end
 
-local function build()
+local function build_cmd()
     local args = {
         '--build ' .. build_dir(),
-        '-j ' .. escape(config.threads)
+        '-j ' .. config.threads
     }
     return 'cmake ' .. table.concat(args, ' ')
 end
 
-local function clean()
-    local args = {
-        '--build ' .. build_dir(),
-        '--target clean'
-    }
-    return 'cmake ' .. table.concat(args, ' ')
+local function clean_cmd()
+    return 'cmake --build ' .. build_dir() .. ' --target clean'
 end
 
 return {
-    configure = function() output.run_cmd(configure()) end,
-    build = function() output.run_cmd(build()) end,
-    clean = function() output.run_cmd('cmake --build ' .. build_dir() .. ' --target clean') end,
-    test = function() output.run_cmd('ctest', 'build') end
+    configure = function(root) output.run_cmd(configure_cmd(), root) end,
+    build = function(root) output.run_cmd(build_cmd(), root) end,
+    clean = function(root) output.run_cmd(clean_cmd(), root) end,
+    test = function(root) output.run_cmd('ctest', root .. '/' .. config.build_dir) end
 }
