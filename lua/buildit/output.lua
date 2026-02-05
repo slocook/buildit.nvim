@@ -1,6 +1,7 @@
 local M = {}
 
 local notify = require('buildit.notify')
+local state = require('buildit.state')
 
 local buf, win = nil, nil
 local last_title = nil
@@ -151,6 +152,7 @@ function M.run_cmd(cmd, cwd)
         on_stderr = on_output,
         on_exit = function(_, exit_code)
             vim.schedule(function()
+                state.set_finished(exit_code)
                 if exit_code == 0 then
                     notify.info('Command completed successfully')
                 else

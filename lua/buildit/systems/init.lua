@@ -3,6 +3,7 @@ local M = {}
 local notify = require('buildit.notify')
 local util = require('buildit.util')
 local detect = require('buildit.detect')
+local state = require('buildit.state')
 
 local tools = {
     cmake = 'cmake',
@@ -33,6 +34,7 @@ local function run_backend(method)
 
     local backend = get_backend(system_name)
     if backend and backend[method] then
+        state.set_running(system_name)
         backend[method](root)
     end
 end

@@ -5,7 +5,8 @@ build system automatically and exposes user commands to configure and build.
 
 ## 🚀 Features
   - Auto-detects build system (searches parent directories)
-  - Toggleable output window
+  - Toggleable output window with jump-to-error support
+  - Statusline integration
   - Easily extensible
 
 ## Installation
@@ -58,6 +59,22 @@ require('buildit').setup({
         threads = 4             -- Parallel jobs for make (default: 4)
     }
 })
+```
+
+## Statusline
+
+Add build status to your statusline with `require('buildit').status`.
+
+**Lualine example:**
+```lua
+{
+    'nvim-lualine/lualine.nvim',
+    opts = {
+        sections = {
+            lualine_x = { require('buildit').status }
+        }
+    }
+}
 ```
 
 ## TODO
